@@ -20,16 +20,8 @@ Es un scaffold de `create-next-app` (App Router, TypeScript, Tailwind v4) sin mo
 - `data.jsx` → datos mock (`GAMES`, `CATS`, `PLAYERS`, generador de scores)
 - `styles.css` → estilos de referencia (tema neón/arcade)
 
-## Comandos
-
-```bash
-npm run dev     # servidor de desarrollo (Next.js con Turbopack)
-npm run build   # build de producción
-npm run start   # servir el build de producción
-npm run lint    # eslint (eslint-config-next: core-web-vitals + typescript)
-```
-
-No hay test runner configurado todavía.
+## Skill
+Usa siempre /frontend-design para diseñar el interfaz de usuario
 
 ## ⚠️ Esta NO es la versión de Next.js que conoces
 
