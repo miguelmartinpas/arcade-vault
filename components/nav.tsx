@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession } from "@/components/session-provider";
 
-function isActive(pathname: string, target: "biblioteca" | "salon" | "auth") {
-  if (target === "biblioteca") return pathname === "/" || pathname.startsWith("/juegos");
+function isActive(pathname: string, target: "home" | "biblioteca" | "salon" | "auth") {
+  if (target === "home") return pathname === "/";
+  if (target === "biblioteca") return pathname === "/biblioteca" || pathname.startsWith("/juegos");
   if (target === "salon") return pathname === "/salon-de-la-fama";
   return pathname === "/auth";
 }
@@ -29,6 +30,12 @@ export function Nav() {
         <div className="links">
           <Link
             href="/"
+            className={isActive(pathname, "home") ? "active" : ""}
+          >
+            Inicio
+          </Link>
+          <Link
+            href="/biblioteca"
             className={isActive(pathname, "biblioteca") ? "active" : ""}
           >
             Biblioteca
@@ -73,6 +80,13 @@ export function Nav() {
         </div>
         <Link
           href="/"
+          className={isActive(pathname, "home") ? "active" : ""}
+          onClick={close}
+        >
+          Inicio
+        </Link>
+        <Link
+          href="/biblioteca"
           className={isActive(pathname, "biblioteca") ? "active" : ""}
           onClick={close}
         >
