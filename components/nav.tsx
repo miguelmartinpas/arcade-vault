@@ -5,10 +5,14 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession } from "@/components/session-provider";
 
-function isActive(pathname: string, target: "home" | "biblioteca" | "salon" | "auth") {
+function isActive(
+  pathname: string,
+  target: "home" | "biblioteca" | "salon" | "about" | "auth"
+) {
   if (target === "home") return pathname === "/";
   if (target === "biblioteca") return pathname === "/biblioteca" || pathname.startsWith("/juegos");
   if (target === "salon") return pathname === "/salon-de-la-fama";
+  if (target === "about") return pathname === "/acerca-de";
   return pathname === "/auth";
 }
 
@@ -45,6 +49,12 @@ export function Nav() {
             className={isActive(pathname, "salon") ? "active" : ""}
           >
             Salón de la Fama
+          </Link>
+          <Link
+            href="/acerca-de"
+            className={isActive(pathname, "about") ? "active" : ""}
+          >
+            Acerca de
           </Link>
         </div>
         <div className="spacer"></div>
@@ -98,6 +108,13 @@ export function Nav() {
           onClick={close}
         >
           Salón de la Fama
+        </Link>
+        <Link
+          href="/acerca-de"
+          className={isActive(pathname, "about") ? "active" : ""}
+          onClick={close}
+        >
+          Acerca de
         </Link>
         <Link
           href="/auth"
