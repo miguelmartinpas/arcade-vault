@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Game } from '@/lib/data';
+import type { Game } from '@/lib/supabase/queries';
 import { useSession } from '@/components/session-provider';
 import { GAME_ENGINES } from '@/lib/games/registry';
 import type { GameEngineHandle } from '@/lib/games/types';
@@ -17,6 +17,8 @@ export function GamePlayer({ game }: { game: Game }) {
     const [over, setOver] = useState(false);
     const [name, setName] = useState(user ? user.name : 'INVITADO');
     const [saved, setSaved] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     const engineFactory = GAME_ENGINES[game.id];
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -67,6 +69,8 @@ export function GamePlayer({ game }: { game: Game }) {
 
     const restart = () => {
         setSaved(false);
+        setSaving(false);
+        setSaveError(null);
         setOver(false);
         setPaused(false);
         if (engineFactory) {
@@ -74,6 +78,18 @@ export function GamePlayer({ game }: { game: Game }) {
         } else {
             setScore(0);
             setLives(3);
+        }
+    };
+
+    const handleSaveScore = async () => {
+        setSaving(true);
+        setSaveError(null);
+        const result = await saveScore({ game: game.id, score, name });
+        setSaving(false);
+        if (result.ok) {
+            setSaved(true);
+        } else {
+            setSaveError(result.error);
         }
     };
 
@@ -166,20 +182,16 @@ export function GamePlayer({ game }: { game: Game }) {
                                     value={name}
                                     onChange={(e) => setName(e.target.value.toUpperCase().slice(0, 10))}
                                     placeholder="TUS INICIALES"
+                                    disabled={saving}
                                 />
-                                <button
-                                    className="btn yellow"
-                                    onClick={() => {
-                                        saveScore({ game: game.id, score, name });
-                                        setSaved(true);
-                                    }}
-                                >
-                                    GUARDAR PUNTUACIÓN
+                                <button className="btn yellow" onClick={handleSaveScore} disabled={saving}>
+                                    {saving ? 'GUARDANDO...' : 'GUARDAR PUNTUACIÓN'}
                                 </button>
                             </div>
                         ) : (
                             <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
                         )}
+                        {saveError && <div className="toast-error">▸ {saveError}</div>}
                         <div className="actions">
                             <button className="btn" onClick={restart}>
                                 JUGAR DE NUEVO
