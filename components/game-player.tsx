@@ -132,7 +132,7 @@ export function GamePlayer({ game }: { game: Game }) {
             <div className="crt">
                 <div className="crt-screen">
                     {engineFactory ? (
-                        <canvas ref={canvasRef} className="asteroids-canvas" />
+                        <canvas ref={canvasRef} className="game-canvas" />
                     ) : (
                         <div className="game-arena">
                             <div className="grid-floor"></div>

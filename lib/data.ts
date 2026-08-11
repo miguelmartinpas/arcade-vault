@@ -20,7 +20,7 @@ export interface ActivityEntry {
 }
 
 export const RECENT_ACTIVITY: ActivityEntry[] = [
-    { player: 'NEONFOX', game: 'Caída', score: 184220, timeAgo: 'hace 2 min', color: 'magenta' },
+    { player: 'NEONFOX', game: 'Tetris', score: 184220, timeAgo: 'hace 2 min', color: 'magenta' },
     { player: 'PX_KAI', game: 'Glotón', score: 96400, timeAgo: 'hace 5 min', color: 'yellow' },
     { player: 'Z3R0COOL', game: 'Invasores', score: 54190, timeAgo: 'hace 8 min', color: 'green' },
     { player: 'VAULT_07', game: 'Asteroides', score: 41200, timeAgo: 'hace 12 min', color: 'cyan' },
