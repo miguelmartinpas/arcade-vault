@@ -6,16 +6,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Estado del proyecto
 
-**Arcade Vault** ya no es un scaffold sin modificar: es una app Next.js (App Router, TypeScript, Tailwind v4) con 4 specs implementadas (`specs/01` a `specs/04`, ver abajo). Rutas reales existentes:
+**Arcade Vault** ya no es un scaffold sin modificar: es una app Next.js (App Router, TypeScript, Tailwind v4) con 7 specs implementadas (`specs/01` a `specs/07`, ver abajo). Rutas reales existentes:
 
 - `/` → Home (hero, features, preview de juegos, actividad/top jugadores, precios, CTA)
-- `/biblioteca` → catálogo de juegos (buscador, chips de categoría, grid)
-- `/juegos/[id]` → ficha de un juego
-- `/juegos/[id]/jugar` → reproductor del minijuego
+- `/biblioteca` → catálogo de juegos (buscador, chips de categoría, grid) — leído de la tabla real `games` en Supabase (`lib/supabase/queries.ts#getGames`)
+- `/juegos/[id]` → ficha de un juego — leído de `games` (`getGameById`)
+- `/juegos/[id]/jugar` → reproductor del minijuego, con motor real enchufable (ver "Motor de juegos" abajo) y guardado real de puntaje (`lib/actions/save-score.ts`)
 - `/auth` → login/registro (hoy: mock en `localStorage` vía `components/session-provider.tsx`, sin backend real todavía — ver "Pendiente")
-- `/salon-de-la-fama` → leaderboard (hoy: datos mock generados con `seededScores`, sin conectar a puntajes reales — ver "Pendiente")
+- `/salon-de-la-fama` → leaderboard global y por juego — datos reales desde las tablas `players`/`scores` (`getGlobalLeaderboard`, `getGameLeaderboard`, `getBestScoreForGame`, `getPlayerBestForGame`)
 - `/acerca-de` → misión + formulario de contacto (envía correo real vía Resend, `app/acerca-de/actions.ts`)
 - `/api/supabase-healthcheck` → ruta de diagnóstico que confirma la conexión al proyecto de Supabase
+
+### Motor de juegos
+
+`lib/games/` define el contrato enchufable de motor real que usa el reproductor (`app/juegos/[id]/jugar`):
+
+- `lib/games/types.ts` → `GameEngineFactory` (firma `(canvas, callbacks) => GameEngineHandle`), `GameEngineCallbacks` (`onScoreChange`, `onLivesChange`, `onLevelChange`, `onGameOver`) y `GameEngineHandle` (`pause`/`resume`/`restart`/`destroy`).
+- `lib/games/registry.ts` → mapa `GAME_ENGINES` de `id` de catálogo → factory. Hoy: `asteroides` (`lib/games/asteroids/engine.ts`, spec 05) y `tetris` (`lib/games/tetris/engine.ts`, spec 07). Un `id` sin motor registrado no tiene minijuego jugable todavía.
+- Cada motor nuevo se agrega con la skill `/port-game` (ver abajo), que solo genera la spec — la implementación real sigue pasando por `/spec-impl`.
 
 `references/templates/` contiene el prototipo de referencia de la UI (HTML/JSX standalone, sin Next.js — usa `React`/`ReactDOM` globales vía CDN, ruteo por `location.hash` y `localStorage`). **No es código a importar**: es la referencia visual/de interacción a portar al App Router real (Server/Client Components, rutas de archivos, etc.). Antes de construir o tocar una pantalla, revisa el archivo `.jsx` equivalente para la estructura y el copy (en español):
 
@@ -33,15 +41,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Pendiente (no implementado todavía)
 
 - **Auth real:** `/auth` sigue siendo un mock (`components/session-provider.tsx`, `localStorage`, sin password check). El cliente de Supabase ya está listo (`lib/supabase/client.ts`/`server.ts`, spec 04) para cuando se aborde en una spec futura.
-- **Catálogo y puntajes reales:** `GAMES`/`PLAYERS`/`ScoreRow` en `lib/data.ts` siguen siendo mock; el proyecto de Supabase conectado hoy tiene **0 tablas** en `public`. Migrar esto es trabajo de una spec futura.
+- **Motores de juego:** solo `asteroides` y `tetris` tienen motor real (`lib/games/registry.ts`). El resto de las filas de `games` en Supabase todavía no tiene minijuego jugable — portarlos es trabajo de futuras specs vía `/port-game`.
 
 ### Supabase
 
-El proyecto ya está conectado (MCP `supabase` en `.mcp.json`, project ref `kjpvjfhuqrclpblkthpd`). El cliente vive en `lib/supabase/` (`client.ts` para navegador, `server.ts` para Server Components/Actions vía `@supabase/ssr`). Variables necesarias: `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (ver sección de entorno abajo).
+El proyecto ya está conectado (MCP `supabase` en `.mcp.json`, project ref `kjpvjfhuqrclpblkthpd`). El cliente vive en `lib/supabase/` (`client.ts` para navegador, `server.ts` para Server Components/Actions vía `@supabase/ssr`, `queries.ts` con las lecturas del catálogo/leaderboards). Variables necesarias: `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (ver sección de entorno abajo).
 
-## Skill
+Tablas reales en `public` (spec 06): `games` (catálogo, reemplaza el mock `GAMES` que existía en `lib/data.ts`), `players` (nombre único) y `scores` (`game_id`, `player_id`, `score`, `created_at`). `lib/data.ts` hoy solo conserva el tipo `Game` y datos que siguen siendo mock a propósito (`RECENT_ACTIVITY` del Home). El alta de puntajes pasa por la Server Action `lib/actions/save-score.ts#saveScoreAction` (valida nombre/score, upsert de `players`, insert en `scores`).
 
-Usa siempre /frontend-design para diseñar el interfaz de usuario
+## Skills
+
+- Usa siempre `/frontend-design` para diseñar el interfaz de usuario.
+- Usa `/port-game <carpeta-en-references/started-games-o-nombre>` para dar de alta un juego nuevo (motor real + leaderboard real en Supabase). Solo genera una spec en `Draft` en `specs/` — nunca escribe código ni toca Supabase. Ver `.claude/skills/port-game/SKILL.md` y `.claude/skills/port-game/game-engine-contract.md` (contrato técnico del motor, casos especiales, checklist de alta en Supabase).
 
 ## ⚠️ Esta NO es la versión de Next.js que conoces
 
@@ -54,12 +65,15 @@ Este repo sigue un flujo basado en specs (ver README.md, skills instaladas desde
 1. **`/spec <descripción>`** — diseña la spec de forma guiada (aclara alcance, datos, plan de implementación, criterios de aceptación) y la guarda en `specs/NN-slug.md` con estado `Draft`. No escribe código.
 2. **`/spec-impl <NN-slug>`** — solo avanza si el estado de la spec es `Approved` (o equivalente). Crea/cambia a la rama `spec-NN-slug` (controlado por `AutoCreateBranch` en `specs/.spec-config.yml`, default `true`) e implementa el plan paso a paso, pausando para revisión de diff entre pasos.
 
-`specs/` ya existe con 4 specs, todas `Implemented`:
+`specs/` ya existe con 7 specs, todas `Implemented`:
 
 - `01-mvp-visual-arcade-vault.md` — MVP visual (Biblioteca, Detalle, Reproductor, Auth mock, Salón de la Fama).
 - `02-new-home-page.md` — Home en `/` y reubicación de Biblioteca a `/biblioteca`.
 - `03-about-contact-resend.md` — página "Acerca de" con formulario de contacto real (Resend).
 - `04-supabase-setup-base.md` — cliente de Supabase (`@supabase/supabase-js` + `@supabase/ssr`) y ruta de healthcheck, sin Auth ni tablas todavía.
+- `05-asteroids-motor-real.md` — motor real de Asteroids (`lib/games/asteroids/engine.ts`) enchufado al reproductor vía el contrato de `lib/games/types.ts`.
+- `06-leaderboards-supabase.md` — migra catálogo (`games`) y leaderboards (`players`/`scores`) de mock a tablas reales de Supabase; agrega `saveScoreAction`.
+- `07-tetris-motor-real.md` — motor real de Tetris (`lib/games/tetris/engine.ts`), segundo motor registrado en `lib/games/registry.ts`.
 
 ## Variables de entorno
 
