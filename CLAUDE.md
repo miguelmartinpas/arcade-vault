@@ -53,6 +53,8 @@ Tablas reales en `public` (spec 06): `games` (catálogo, reemplaza el mock `GAME
 
 - `game-planner` (`.claude/agents/game-planner.md`) — subagente de invocación solo manual (nunca se auto-dispara) que decide qué juego conviene portar/agregar después a Arcade Vault. Pondera categorías cubiertas vs. faltantes, complejidad estimada del motor y assets disponibles, cruzando `references/started-games/`, `lib/games/registry.ts` y el catálogo documentado en `specs/06-leaderboards-supabase.md` (no tiene acceso a Supabase en vivo). No escribe specs ni código — solo recomienda; el alta real sigue pasando por `/port-game`. Mantiene su propia memoria de sugerencias previas en `references/game-suggestion-todo.md` (checklist versionado: `Pendientes` / `Descartados / en curso` / `Portados`), para no repetir recomendaciones sin nueva justificación.
 
+- `game-jam` (`.claude/agents/game-jam.md`) — generador de specs en batch para múltiples juegos. A partir de un criterio de selección (prioridad, categoría, lista específica) desde `references/game-suggestion-todo.md`, genera 2-6 specs por juego en `specs/game-jam/[game-id]/` (01-mvp + 02+ features), todas en estado `Draft`. No escribe código ni toca Supabase — solo genera archivos `.md` de specs basándose en el formato de las specs 05 y 07. Invocación manual (ej: "game-jam alta prioridad", "game-jam VERSUS", "game-jam bloque-buster + serpentina"). Optimizado para preparar specs de varios juegos a la vez; `/port-game` sigue siendo la opción para un solo juego con flujo interactivo.
+
 ## Skills
 
 - Usa siempre `/frontend-design` para diseñar el interfaz de usuario.
