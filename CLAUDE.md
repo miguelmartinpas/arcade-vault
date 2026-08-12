@@ -49,6 +49,10 @@ El proyecto ya está conectado (MCP `supabase` en `.mcp.json`, project ref `kjpv
 
 Tablas reales en `public` (spec 06): `games` (catálogo, reemplaza el mock `GAMES` que existía en `lib/data.ts`), `players` (nombre único) y `scores` (`game_id`, `player_id`, `score`, `created_at`). `lib/data.ts` hoy solo conserva el tipo `Game` y datos que siguen siendo mock a propósito (`RECENT_ACTIVITY` del Home). El alta de puntajes pasa por la Server Action `lib/actions/save-score.ts#saveScoreAction` (valida nombre/score, upsert de `players`, insert en `scores`).
 
+## Agentes
+
+- `game-planner` (`.claude/agents/game-planner.md`) — subagente de invocación solo manual (nunca se auto-dispara) que decide qué juego conviene portar/agregar después a Arcade Vault. Pondera categorías cubiertas vs. faltantes, complejidad estimada del motor y assets disponibles, cruzando `references/started-games/`, `lib/games/registry.ts` y el catálogo documentado en `specs/06-leaderboards-supabase.md` (no tiene acceso a Supabase en vivo). No escribe specs ni código — solo recomienda; el alta real sigue pasando por `/port-game`. Mantiene su propia memoria de sugerencias previas en `references/game-suggestion-todo.md` (checklist versionado: `Pendientes` / `Descartados / en curso` / `Portados`), para no repetir recomendaciones sin nueva justificación.
+
 ## Skills
 
 - Usa siempre `/frontend-design` para diseñar el interfaz de usuario.
