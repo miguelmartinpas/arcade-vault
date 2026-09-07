@@ -4,6 +4,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signUpAction, signInAction } from '@/lib/actions/auth';
 import { useSession } from '@/components/session-provider';
+import { createClient } from '@/lib/supabase/client';
 
 /**
  * Valida que una contraseña cumpla los requisitos mínimos:
@@ -48,21 +49,18 @@ export function AuthFormClient() {
     const passwordError = signUpPassword ? validatePassword(signUpPassword) : null;
     const passwordsMatch = signUpPassword && signUpConfirmPassword && signUpPassword === signUpConfirmPassword;
 
-    // Efecto para redirigir después del login cuando la sesión esté lista
+    // Efecto para redirigir cuando hay sesión activa
     useEffect(() => {
-        if (waitingForSession && user && !sessionLoading) {
-            // La sesión está lista, redirigir
+        console.log('[AuthForm] useEffect:', { sessionLoading, user: !!user, waitingForSession, redirectTo });
+        // Solo redirigir si:
+        // 1. La sesión terminó de cargar (!sessionLoading)
+        // 2. Hay un usuario logueado (user)
+        // 3. Estamos esperando después de un login (waitingForSession) O el usuario ya estaba logueado al entrar
+        if (!sessionLoading && user) {
+            console.log('[AuthForm] Redirigiendo a:', redirectTo);
             router.push(redirectTo);
         }
-    }, [waitingForSession, user, sessionLoading, router, redirectTo]);
-
-    // Efecto para redirigir automáticamente si ya hay una sesión activa
-    useEffect(() => {
-        if (!sessionLoading && user && !waitingForSession) {
-            // Usuario ya está logueado, redirigir a donde corresponda
-            router.push(redirectTo);
-        }
-    }, [user, sessionLoading, waitingForSession, router, redirectTo]);
+    }, [user, sessionLoading, router, redirectTo, waitingForSession]);
 
     const handleSignUp = async (e: FormEvent) => {
         e.preventDefault();
@@ -133,15 +131,28 @@ export function AuthFormClient() {
             password: signInPassword,
         });
 
-        setLoading(false);
+        console.log('[AuthForm] signInAction result:', result);
 
         if (result.ok) {
-            // Activar flag para esperar a que la sesión se sincronice
-            // El redirect ocurrirá en el useEffect cuando user esté disponible
-            setWaitingForSession(true);
+            // El servidor hizo login exitoso y seteó las cookies
+            // Ahora forzamos al cliente a refrescar su sesión para leer esas cookies
+            console.log('[AuthForm] Login exitoso, refrescando sesión del cliente...');
+            const supabase = createClient();
+            const { data, error: refreshError } = await supabase.auth.refreshSession();
+
+            console.log('[AuthForm] Sesión refrescada:', { hasSession: !!data.session, error: refreshError });
+
+            if (data.session) {
+                // La sesión está lista, activar flag para redirect
+                setWaitingForSession(true);
+            } else {
+                setError('Error al sincronizar la sesión');
+            }
         } else {
             setError(result.error);
         }
+
+        setLoading(false);
     };
 
     return (

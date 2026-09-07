@@ -28,7 +28,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
         // Función para cargar el usuario con su playerName
         async function loadUser(authUser: User | null) {
+            console.log('[SessionProvider] loadUser called:', { authUser: !!authUser, id: authUser?.id });
+
             if (!authUser) {
+                console.log('[SessionProvider] No auth user, clearing session');
                 setUser(null);
                 setLoading(false);
                 return;
@@ -42,19 +45,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
                 .maybeSingle();
 
             if (error) {
-                console.error('Error al cargar perfil de jugador:', error);
+                console.error('[SessionProvider] Error al cargar perfil de jugador:', error);
                 setUser(null);
                 setLoading(false);
                 return;
             }
 
             if (!player) {
-                console.warn('Usuario autenticado sin perfil de jugador');
+                console.warn('[SessionProvider] Usuario autenticado sin perfil de jugador');
                 setUser(null);
                 setLoading(false);
                 return;
             }
 
+            console.log('[SessionProvider] User loaded successfully:', player.name);
             setUser({
                 id: authUser.id,
                 email: authUser.email || '',
@@ -71,7 +75,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         // Suscribirse a cambios de autenticación
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log('[SessionProvider] Auth state change:', event, { hasSession: !!session });
             loadUser(session?.user ?? null);
         });
 
