@@ -4,18 +4,18 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Game } from '@/lib/supabase/queries';
 import { useSession } from '@/components/session-provider';
+import { saveScoreAction } from '@/lib/actions/save-score';
 import { GAME_ENGINES } from '@/lib/games/registry';
 import type { GameEngineHandle } from '@/lib/games/types';
 
 export function GamePlayer({ game }: { game: Game }) {
     const router = useRouter();
-    const { user, saveScore } = useSession();
+    const { user } = useSession();
     const [score, setScore] = useState(0);
     const [lives, setLives] = useState(3);
     const [engineLevel, setEngineLevel] = useState(1);
     const [paused, setPaused] = useState(false);
     const [over, setOver] = useState(false);
-    const [name, setName] = useState(user ? user.name : 'INVITADO');
     const [saved, setSaved] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
@@ -84,8 +84,14 @@ export function GamePlayer({ game }: { game: Game }) {
     const handleSaveScore = async () => {
         setSaving(true);
         setSaveError(null);
-        const result = await saveScore({ game: game.id, score, name });
+
+        const result = await saveScoreAction({
+            gameId: game.id,
+            score,
+        });
+
         setSaving(false);
+
         if (result.ok) {
             setSaved(true);
         } else {
@@ -100,7 +106,7 @@ export function GamePlayer({ game }: { game: Game }) {
                     <div className="hud-stat">
                         <div className="l">Jugador</div>
                         <div className="v" style={{ color: 'var(--ink)' }}>
-                            {name}
+                            {user ? user.playerName : 'INVITADO'}
                         </div>
                     </div>
                     <div className="hud-stat">
@@ -176,22 +182,42 @@ export function GamePlayer({ game }: { game: Game }) {
                         <h2>FIN DEL JUEGO</h2>
                         <div className="final-label">PUNTUACIÓN FINAL</div>
                         <div className="final">{score.toLocaleString('es-ES')}</div>
-                        {!saved ? (
-                            <div className="input-row">
-                                <input
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value.toUpperCase().slice(0, 10))}
-                                    placeholder="TUS INICIALES"
-                                    disabled={saving}
-                                />
-                                <button className="btn yellow" onClick={handleSaveScore} disabled={saving}>
-                                    {saving ? 'GUARDANDO...' : 'GUARDAR PUNTUACIÓN'}
+
+                        {/* Si no hay sesión, mostrar mensaje de registro */}
+                        {!user ? (
+                            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                                <div
+                                    style={{
+                                        fontSize: 14,
+                                        color: 'var(--cyan)',
+                                        marginBottom: 16,
+                                    }}
+                                >
+                                    Regístrate para guardar tu puntaje
+                                </div>
+                                <button
+                                    className="btn yellow"
+                                    onClick={() => router.push(`/auth?redirect=/juegos/${game.id}/jugar`)}
+                                >
+                                    REGISTRARSE / INICIAR SESIÓN
                                 </button>
                             </div>
+                        ) : !saved ? (
+                            <>
+                                <button
+                                    className="btn yellow"
+                                    onClick={handleSaveScore}
+                                    disabled={saving}
+                                    style={{ width: '100%', marginTop: 20 }}
+                                >
+                                    {saving ? 'GUARDANDO...' : 'GUARDAR PUNTAJE'}
+                                </button>
+                                {saveError && <div className="toast-error">▸ {saveError}</div>}
+                            </>
                         ) : (
                             <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
                         )}
-                        {saveError && <div className="toast-error">▸ {saveError}</div>}
+
                         <div className="actions">
                             <button className="btn" onClick={restart}>
                                 JUGAR DE NUEVO

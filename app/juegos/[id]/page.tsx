@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 import {
     getGames,
     getGameById,
@@ -19,15 +19,23 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
     const game = await getGameById(id);
     if (!game) notFound();
 
-    const [scores, bestGlobal, cookieStore] = await Promise.all([
-        getGameLeaderboard(id, 10),
-        getBestScoreForGame(id),
-        cookies(),
-    ]);
+    const [scores, bestGlobal] = await Promise.all([getGameLeaderboard(id, 10), getBestScoreForGame(id)]);
 
-    const rawUserCookie = cookieStore.get('av_user')?.value;
-    const userName = rawUserCookie ? decodeURIComponent(rawUserCookie) : null;
-    const playerBest = userName ? await getPlayerBestForGame(userName, id) : null;
+    // Obtener user_id de la sesión del servidor
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    // Si hay sesión, obtener la mejor marca del jugador autenticado
+    const playerBest = user ? await getPlayerBestForGame(user.id, id) : null;
+
+    // Obtener el nombre del jugador para mostrarlo en la fila "TÚ"
+    let playerName: string | null = null;
+    if (user) {
+        const { data: player } = await supabase.from('players').select('name').eq('user_id', user.id).maybeSingle();
+        playerName = player?.name ?? null;
+    }
 
     return (
         <div className="av-detail fade-in">
@@ -97,11 +105,11 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
                             <div className="sc">{r.score.toLocaleString('es-ES')}</div>
                         </div>
                     ))}
-                    {playerBest && (
+                    {playerBest && playerName && (
                         <div className="lb-row you">
                             <div className="rk">TÚ</div>
                             <div className="pl">
-                                {userName}
+                                {playerName}
                                 <div style={{ fontSize: 10, color: 'var(--ink-faint)', letterSpacing: '0.1em' }}>
                                     {playerBest.date}
                                 </div>
