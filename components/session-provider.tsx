@@ -82,9 +82,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const logout = async () => {
-        await signOutAction();
-        // signOutAction ya hace revalidatePath y redirect, pero por si acaso:
+        // Actualizar el estado inmediatamente para feedback visual instantáneo
         setUser(null);
+        // Llamar a la Server Action que cerrará la sesión en el servidor
+        await signOutAction();
+        // onAuthStateChange confirmará el cambio y mantendrá el estado sincronizado
     };
 
     return <SessionContext.Provider value={{ user, loading, logout }}>{children}</SessionContext.Provider>;

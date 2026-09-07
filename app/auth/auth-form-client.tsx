@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signUpAction, signInAction } from '@/lib/actions/auth';
+import { useSession } from '@/components/session-provider';
 
 /**
  * Valida que una contraseña cumpla los requisitos mínimos:
@@ -25,11 +26,13 @@ export function AuthFormClient() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get('redirect') || '/biblioteca';
+    const { user, loading: sessionLoading } = useSession();
 
     const [tab, setTab] = useState<'in' | 'up'>('in');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [waitingForSession, setWaitingForSession] = useState(false);
 
     // Campos del formulario de registro
     const [signUpEmail, setSignUpEmail] = useState('');
@@ -44,6 +47,22 @@ export function AuthFormClient() {
     // Validación client-side de contraseña (para mostrar inline)
     const passwordError = signUpPassword ? validatePassword(signUpPassword) : null;
     const passwordsMatch = signUpPassword && signUpConfirmPassword && signUpPassword === signUpConfirmPassword;
+
+    // Efecto para redirigir después del login cuando la sesión esté lista
+    useEffect(() => {
+        if (waitingForSession && user && !sessionLoading) {
+            // La sesión está lista, redirigir
+            router.push(redirectTo);
+        }
+    }, [waitingForSession, user, sessionLoading, router, redirectTo]);
+
+    // Efecto para redirigir automáticamente si ya hay una sesión activa
+    useEffect(() => {
+        if (!sessionLoading && user && !waitingForSession) {
+            // Usuario ya está logueado, redirigir a donde corresponda
+            router.push(redirectTo);
+        }
+    }, [user, sessionLoading, waitingForSession, router, redirectTo]);
 
     const handleSignUp = async (e: FormEvent) => {
         e.preventDefault();
@@ -117,8 +136,9 @@ export function AuthFormClient() {
         setLoading(false);
 
         if (result.ok) {
-            // Redirigir a la página de redirect o a /biblioteca
-            router.push(redirectTo);
+            // Activar flag para esperar a que la sesión se sincronice
+            // El redirect ocurrirá en el useEffect cuando user esté disponible
+            setWaitingForSession(true);
         } else {
             setError(result.error);
         }

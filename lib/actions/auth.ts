@@ -142,13 +142,14 @@ export async function signInAction(input: {
 /**
  * Server Action para cerrar sesión.
  */
-export async function signOutAction(): Promise<void> {
+export async function signOutAction(): Promise<{ ok: true }> {
     const supabase = await createClient();
     await supabase.auth.signOut();
 
     // Revalidar rutas que dependen de la sesión
     revalidatePath('/', 'layout');
 
-    // Redirigir a la home
-    redirect('/');
+    // No redirigir aquí - dejar que el cliente maneje la navegación
+    // después de que el estado de sesión se haya sincronizado
+    return { ok: true };
 }
