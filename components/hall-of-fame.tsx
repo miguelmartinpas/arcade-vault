@@ -118,7 +118,7 @@ export function HallOfFame({ games, globalLeaderboard, gameLeaderboards, playerB
                                         TÚ
                                     </div>
                                     <div className="pl" style={{ color: 'var(--yellow)' }}>
-                                        {user.name}
+                                        {user.playerName}
                                     </div>
                                     <div
                                         className="sc"

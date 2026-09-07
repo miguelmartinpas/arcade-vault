@@ -105,14 +105,14 @@ export async function getBestScoreForGame(gameId: string): Promise<number | null
 }
 
 export async function getPlayerBestForGame(
-    playerName: string,
+    userId: string,
     gameId: string,
 ): Promise<{ score: number; date: string } | null> {
     const supabase = await createClient();
     const { data: player, error: playerError } = await supabase
         .from('players')
         .select('id')
-        .eq('name', playerName)
+        .eq('user_id', userId)
         .maybeSingle();
     if (playerError) throw playerError;
     if (!player) return null;
