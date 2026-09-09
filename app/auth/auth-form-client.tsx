@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 
 /**
  * Valida que una contraseña cumpla los requisitos mínimos:
- * - Mínimo 6 caracteres
+ * - Mínimo 8 caracteres
  * - Al menos una mayúscula
  * - Al menos un número
  * - Al menos un símbolo
@@ -16,7 +16,7 @@ import { createClient } from '@/lib/supabase/client';
  * @returns null si la contraseña es válida, o un mensaje de error si no lo es
  */
 function validatePassword(password: string): string | null {
-    if (password.length < 6) return 'Mínimo 6 caracteres';
+    if (password.length < 8) return 'Mínimo 8 caracteres';
     if (!/[A-Z]/.test(password)) return 'Debe contener una mayúscula';
     if (!/[0-9]/.test(password)) return 'Debe contener un número';
     if (!/[^A-Za-z0-9]/.test(password)) return 'Debe contener un símbolo';
