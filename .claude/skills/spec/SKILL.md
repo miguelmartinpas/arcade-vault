@@ -20,6 +20,24 @@ Read `template.md` (in the same directory as this skill) to see the full structu
 - Follow the four phases in order. **Do not skip phases.** If the user wants to go faster, remind them that the cost of a bad spec gets paid later in code.
 - Your replies must be in the same language as the initial prompt. E.g.: if the initial prompt is in Spanish, your replies must be in Spanish; if it is in English, your replies must be in English.
 
+### Phase 0 — Load context7 (MANDATORY)
+
+**Before starting Phase 1, you MUST load context7 tools:**
+
+1. Use `ToolSearch` with query `select:mcp__plugin_context7_context7__query-docs,mcp__plugin_context7_context7__resolve-library-id` to load the context7 MCP tools.
+2. These tools will be available throughout all phases to query updated documentation for any library, framework, or API.
+3. **Use context7 proactively** during Phase 2 (clarification) and Phase 3 (spec development) whenever you need to verify:
+    - API syntax or configuration details
+    - Framework-specific patterns or conventions
+    - Version-specific changes or deprecations
+    - Best practices for libraries mentioned in the spec
+
+**When to use context7 during spec creation:**
+
+- If the feature involves a specific library/framework (Next.js, React, Supabase, Tailwind, etc.), query its documentation BEFORE asking clarifying questions or writing implementation steps.
+- If the user mentions a technology you're not 100% certain about, query context7 instead of relying on training data.
+- Prefer context7 over assumptions — documentation is always more current than training data.
+
 ### Phase 1 — Understand the context
 
 Before asking questions about the feature, make sure you have project context:
@@ -101,21 +119,21 @@ When all sections are confirmed:
 5. Mark the state as `Draft` by default. **Do not mark it as `Approved` automatically** — the user does that once they have re-read it.
 6. **Seed the config file if it does not exist.** Check for `specs/.spec-config.yml`. If it is **missing**, create it with the default content below. If it **already exists, leave it untouched** — never overwrite the user's settings.
 
-   ```yaml
-   # spec workflow configuration
-   #
-   # AutoCreateBranch — controls whether /spec-impl creates the git branch automatically.
-   #   true  (default) → /spec-impl creates and switches to spec-NN-slug without asking
-   #   false           → /spec-impl asks for [y/N] confirmation before creating the branch
-   AutoCreateBranch: true
-   ```
+    ```yaml
+    # spec workflow configuration
+    #
+    # AutoCreateBranch — controls whether /spec-impl creates the git branch automatically.
+    #   true  (default) → /spec-impl creates and switches to spec-NN-slug without asking
+    #   false           → /spec-impl asks for [y/N] confirmation before creating the branch
+    AutoCreateBranch: true
+    ```
 
 7. Confirm to the user:
-   - Path of the created file.
-   - Reminder: the spec is in `Draft` state. Change it to `Approved` once you have re-read it.
-   - If you just created `specs/.spec-config.yml`, mention it exists and that `AutoCreateBranch` defaults to `true` (set it to `false` to control branch creation yourself).
-   - Next step: once reviewed and approved, run `/spec-impl NN-slug` to implement it.
-   - **Stop here.** Do not propose implementing the spec, writing code, or taking any further action beyond this confirmation.
+    - Path of the created file.
+    - Reminder: the spec is in `Draft` state. Change it to `Approved` once you have re-read it.
+    - If you just created `specs/.spec-config.yml`, mention it exists and that `AutoCreateBranch` defaults to `true` (set it to `false` to control branch creation yourself).
+    - Next step: once reviewed and approved, run `/spec-impl NN-slug` to implement it.
+    - **Stop here.** Do not propose implementing the spec, writing code, or taking any further action beyond this confirmation.
 
 ## Hard rules
 

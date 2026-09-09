@@ -26,7 +26,28 @@ Branch-creation config:
 
 ## Instructions
 
-Follow these four phases in strict order. **Do not advance to the next phase if the previous one did not complete correctly.**
+Follow these phases in strict order. **Do not advance to the next phase if the previous one did not complete correctly.**
+
+---
+
+### Phase 0 — Load context7 (MANDATORY)
+
+**Before starting Phase 1, you MUST load context7 tools:**
+
+1. Use `ToolSearch` with query `select:mcp__plugin_context7_context7__query-docs,mcp__plugin_context7_context7__resolve-library-id` to load the context7 MCP tools.
+2. These tools will be available throughout the entire implementation to query updated documentation for any library, framework, or API.
+3. **Use context7 proactively** during Phase 4 (implementation) whenever you need to verify:
+    - API syntax or configuration details
+    - Framework-specific patterns or conventions
+    - Version-specific changes or deprecations
+    - Best practices for libraries used in the implementation
+
+**When to use context7 during implementation:**
+
+- Before writing code that uses a specific library/framework API, query its documentation to ensure correctness.
+- When implementing a step that involves a technology mentioned in the spec (Next.js, React, Supabase, Tailwind, etc.), verify the implementation approach with context7.
+- If you encounter an API that behaves differently than expected, query context7 instead of assuming it's a bug.
+- Prefer context7 over assumptions — documentation is always more current than training data.
 
 ---
 
