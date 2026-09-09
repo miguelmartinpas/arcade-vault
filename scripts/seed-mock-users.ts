@@ -72,7 +72,7 @@ async function seedMockUsers() {
     // 2. Crear usuario en Auth para cada jugador
     for (const player of players as Player[]) {
         const email = `${player.name.toLowerCase()}@mock.com`;
-        const password = 'Test-00'; // Cumple validación: 6+ chars, mayúscula, número, símbolo
+        const password = 'Test-001!'; // Cumple validación: 8+ chars, mayúscula, número, símbolo
 
         console.log(`⏳ Procesando: ${player.name} (${email})...`);
 

@@ -27,6 +27,19 @@ export async function signUpAction(input: {
         return { ok: false, error: 'El nombre de jugador debe tener entre 1 y 12 caracteres' };
     }
 
+    // Validar contraseña server-side (defensa en profundidad)
+    if (password.length < 8) {
+        return { ok: false, error: 'La contraseña debe tener al menos 8 caracteres' };
+    }
+
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSymbol = /[@$!%*?&]/.test(password);
+
+    if (!hasUppercase || !hasNumber || !hasSymbol) {
+        return { ok: false, error: 'La contraseña debe incluir mayúscula, número y símbolo' };
+    }
+
     const supabase = await createClient();
 
     // Verificar que el nombre de jugador no exista ya
