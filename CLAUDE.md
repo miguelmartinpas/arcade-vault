@@ -6,14 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Estado del proyecto
 
-**Arcade Vault** ya no es un scaffold sin modificar: es una app Next.js (App Router, TypeScript, Tailwind v4) con 7 specs implementadas (`specs/01` a `specs/07`, ver abajo). Rutas reales existentes:
+**Arcade Vault** ya no es un scaffold sin modificar: es una app Next.js (App Router, TypeScript, Tailwind v4) con 9 specs implementadas (`specs/01` a `specs/09`, ver abajo). Rutas reales existentes:
 
 - `/` → Home (hero, features, preview de juegos, actividad/top jugadores, precios, CTA)
 - `/biblioteca` → catálogo de juegos (buscador, chips de categoría, grid) — leído de la tabla real `games` en Supabase (`lib/supabase/queries.ts#getGames`)
-- `/juegos/[id]` → ficha de un juego — leído de `games` (`getGameById`)
-- `/juegos/[id]/jugar` → reproductor del minijuego, con motor real enchufable (ver "Motor de juegos" abajo) y guardado real de puntaje (`lib/actions/save-score.ts`)
-- `/auth` → login/registro (hoy: mock en `localStorage` vía `components/session-provider.tsx`, sin backend real todavía — ver "Pendiente")
-- `/salon-de-la-fama` → leaderboard global y por juego — datos reales desde las tablas `players`/`scores` (`getGlobalLeaderboard`, `getGameLeaderboard`, `getBestScoreForGame`, `getPlayerBestForGame`)
+- `/juegos/[id]` → ficha de un juego — leído de `games` (`getGameById`), muestra "tu mejor marca" si hay sesión autenticada
+- `/juegos/[id]/jugar` → reproductor del minijuego con motor real enchufable (ver "Motor de juegos" abajo), requiere autenticación (redirect a `/auth` si no hay sesión), guardado automático de puntaje bajo el nombre del jugador autenticado (`lib/actions/save-score.ts`)
+- `/auth` → login/registro real con Supabase Auth (email/password con verificación obligatoria), formularios de "Iniciar sesión" y "Registrarse" con toggle, validación de contraseña (mínimo 8 caracteres, mayúscula, número, símbolo)
+- `/salon-de-la-fama` → leaderboard global y por juego — datos reales desde las tablas `players`/`scores` (`getGlobalLeaderboard`, `getGameLeaderboard`, `getBestScoreForGame`, `getPlayerBestForGame`), muestra "tu mejor marca" si hay sesión autenticada
 - `/acerca-de` → misión + formulario de contacto (envía correo real vía Resend, `app/acerca-de/actions.ts`)
 - `/api/supabase-healthcheck` → ruta de diagnóstico que confirma la conexión al proyecto de Supabase
 
@@ -40,14 +40,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Pendiente (no implementado todavía)
 
-- **Auth real:** `/auth` sigue siendo un mock (`components/session-provider.tsx`, `localStorage`, sin password check). El cliente de Supabase ya está listo (`lib/supabase/client.ts`/`server.ts`, spec 04) para cuando se aborde en una spec futura.
 - **Motores de juego:** solo `asteroides` y `tetris` tienen motor real (`lib/games/registry.ts`). El resto de las filas de `games` en Supabase todavía no tiene minijuego jugable — portarlos es trabajo de futuras specs vía `/port-game`.
+- **Recuperación de contraseña:** no hay flujo de "Olvidé mi contraseña" todavía — se dejó para una spec futura.
+- **Pantalla de perfil:** no existe ruta `/perfil` para editar nombre de jugador, email, o ver historial — se dejó para una spec futura.
 
 ### Supabase
 
 El proyecto ya está conectado (MCP `supabase` en `.mcp.json`, project ref `kjpvjfhuqrclpblkthpd`). El cliente vive en `lib/supabase/` (`client.ts` para navegador, `server.ts` para Server Components/Actions vía `@supabase/ssr`, `queries.ts` con las lecturas del catálogo/leaderboards). Variables necesarias: `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (ver sección de entorno abajo).
 
-Tablas reales en `public` (spec 06): `games` (catálogo, reemplaza el mock `GAMES` que existía en `lib/data.ts`), `players` (nombre único) y `scores` (`game_id`, `player_id`, `score`, `created_at`). `lib/data.ts` hoy solo conserva el tipo `Game` y datos que siguen siendo mock a propósito (`RECENT_ACTIVITY` del Home). El alta de puntajes pasa por la Server Action `lib/actions/save-score.ts#saveScoreAction` (valida nombre/score, upsert de `players`, insert en `scores`).
+**Autenticación (spec 08):** usa Supabase Auth con método email/password. `components/session-provider.tsx` maneja la sesión real vía `supabase.auth.getSession()` y `onAuthStateChange()` (ya no usa `localStorage['av_user']` ni cookie mock). Registro requiere email, contraseña (mínimo 8 caracteres + mayúscula + número + símbolo, validado client-side y server-side), y nombre de jugador único. Verificación de email obligatoria antes de permitir login. Server Actions de auth en `lib/actions/auth.ts` (`signUpAction`, `signInAction`, `signOutAction`). `middleware.ts` protege `/juegos/[id]/jugar` para requerir sesión autenticada. Usuarios mock creados para testing/demos: `<nombre_lowercase>@mock.com` (ej. `neonfox@mock.com`) con contraseña `Test-001!`.
+
+**Tablas reales en `public` (specs 06, 08):**
+
+- `games` — catálogo de juegos (reemplaza el mock `GAMES` que existía en `lib/data.ts`).
+- `players` — jugadores con `name` único (1-12 caracteres) y `user_id uuid references auth.users(id) unique` (relación 1:1 con usuarios autenticados). Política RLS: `insert` solo si `auth.uid() = user_id` (verificado).
+- `scores` — puntajes con `game_id`, `player_id`, `score`, `created_at`. Política RLS: `insert` solo si el `player_id` pertenece a un `player` cuyo `user_id = auth.uid()` (verificado). Políticas de `select` siguen siendo públicas.
+
+`lib/data.ts` hoy solo conserva el tipo `Game` y datos que siguen siendo mock a propósito (`RECENT_ACTIVITY` del Home). El alta de puntajes pasa por la Server Action `lib/actions/save-score.ts#saveScoreAction` (ya NO recibe `name` — obtiene el `user_id` de la sesión del servidor, busca el `player_id` en `players` por `user_id`, inserta en `scores`).
 
 ## Agentes
 
@@ -71,7 +80,7 @@ Este repo sigue un flujo basado en specs (ver README.md, skills instaladas desde
 1. **`/spec <descripción>`** — diseña la spec de forma guiada (aclara alcance, datos, plan de implementación, criterios de aceptación) y la guarda en `specs/NN-slug.md` con estado `Draft`. No escribe código.
 2. **`/spec-impl <NN-slug>`** — solo avanza si el estado de la spec es `Approved` (o equivalente). Crea/cambia a la rama `spec-NN-slug` (controlado por `AutoCreateBranch` en `specs/.spec-config.yml`, default `true`) e implementa el plan paso a paso, pausando para revisión de diff entre pasos.
 
-`specs/` ya existe con 7 specs, todas `Implemented`:
+`specs/` ya existe con 9 specs, todas `Implemented`:
 
 - `01-mvp-visual-arcade-vault.md` — MVP visual (Biblioteca, Detalle, Reproductor, Auth mock, Salón de la Fama).
 - `02-new-home-page.md` — Home en `/` y reubicación de Biblioteca a `/biblioteca`.
@@ -80,6 +89,8 @@ Este repo sigue un flujo basado en specs (ver README.md, skills instaladas desde
 - `05-asteroids-motor-real.md` — motor real de Asteroids (`lib/games/asteroids/engine.ts`) enchufado al reproductor vía el contrato de `lib/games/types.ts`.
 - `06-leaderboards-supabase.md` — migra catálogo (`games`) y leaderboards (`players`/`scores`) de mock a tablas reales de Supabase; agrega `saveScoreAction`.
 - `07-tetris-motor-real.md` — motor real de Tetris (`lib/games/tetris/engine.ts`), segundo motor registrado en `lib/games/registry.ts`.
+- `08-supabase-auth-email-password.md` — autenticación real con Supabase Auth (email/password con verificación obligatoria), reemplaza el mock de sesión por `supabase.auth`, agrega columna `user_id` a `players`, protege `/juegos/[id]/jugar` con middleware, guardado automático de puntajes bajo el jugador autenticado, políticas RLS verificadas para `insert` en `players`/`scores`.
+- `09-security-hardening.md` — hardening de seguridad: eleva mínimo de contraseña de 6 a 8 caracteres (validación client-side y server-side), agrega headers HTTP de seguridad (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Content-Security-Policy`) en `next.config.ts`, resuelve warning de `rls_auto_enable()` en Supabase.
 
 ## Variables de entorno
 
@@ -87,3 +98,4 @@ Convención del repo: `.env.template` (versionado, solo placeholders) documenta 
 
 - `RESEND_API_KEY`, `CONTACT_TO_EMAIL` — envío de correo del formulario de contacto (spec 03).
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — cliente de Supabase (spec 04). Se obtienen del proyecto ya conectado vía el MCP de Supabase (`get_project_url`, `get_publishable_keys`) en vez de copiarlas del dashboard.
+- `SUPABASE_SERVICE_ROLE_KEY` — ⚠️ **ALTAMENTE SENSIBLE**: acceso admin total a Supabase (spec 08). Solo necesaria para ejecutar el script de seed de usuarios mock (`scripts/seed-mock-users.ts`) una vez después de la migración SQL de la spec 08. Se puede borrar del `.env.local` después de ejecutarlo. **NUNCA** comitearla al repo ni compartirla. Se obtiene vía MCP de Supabase o desde el dashboard (Settings → API → service_role key).
