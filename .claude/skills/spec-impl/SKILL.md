@@ -105,45 +105,45 @@ Once you have confirmed the state means `Approved`:
 
 1. Derive the branch name from the spec file's full name, without the extension. Format: `spec-NN-slug`. Examples:
 
-   - `01-mvp-arkanoid.md` → branch `spec-01-mvp-arkanoid`
-   - `02-powerups.md` → branch `spec-02-powerups`
+    - `01-mvp-arkanoid.md` → branch `spec-01-mvp-arkanoid`
+    - `02-powerups.md` → branch `spec-02-powerups`
 
 2. Read the `AutoCreateBranch` flag from the **Branch-creation config** shown in the session context above.
 
-   - If the config file does not exist, the value is missing, or the value is unrecognized → treat it as `true` (the default).
-   - Only an explicit `false` (in any capitalization) disables automatic branch creation.
+    - If the config file does not exist, the value is missing, or the value is unrecognized → treat it as `true` (the default).
+    - Only an explicit `false` (in any capitalization) disables automatic branch creation.
 
-   **If `AutoCreateBranch` is `true` (default):** proceed without asking.
+    **If `AutoCreateBranch` is `true` (default):** proceed without asking.
 
-   - If the branch **does not exist**: create it with `git checkout -b spec-NN-slug`.
-   - If it **already exists**: inform the user that the branch already existed (it may mean previous work is being resumed).
-   - In both cases: switch to the branch with `git checkout spec-NN-slug` and confirm the change was successful before continuing.
+    - If the branch **does not exist**: create it with `git checkout -b spec-NN-slug`.
+    - If it **already exists**: inform the user that the branch already existed (it may mean previous work is being resumed).
+    - In both cases: switch to the branch with `git checkout spec-NN-slug` and confirm the change was successful before continuing.
 
-   **If `AutoCreateBranch` is `false`:** ask before touching git. Show:
+    **If `AutoCreateBranch` is `false`:** ask before touching git. Show:
 
-   ```
-   AutoCreateBranch is set to false.
-   Create and switch to the branch spec-NN-slug? [y/N]
-   ```
+    ```
+    AutoCreateBranch is set to false.
+    Create and switch to the branch spec-NN-slug? [y/N]
+    ```
 
-   - If the user answers **yes**: create/switch to the branch exactly as in the `true` case above.
-   - If the user answers **no** or leaves it empty: **do not create any branch.** Tell the user you will implement on the current branch (the one shown in the session context above) and ask for explicit confirmation to continue there. Do not improvise — wait for the answer.
+    - If the user answers **yes**: create/switch to the branch exactly as in the `true` case above.
+    - If the user answers **no** or leaves it empty: **do not create any branch.** Tell the user you will implement on the current branch (the one shown in the session context above) and ask for explicit confirmation to continue there. Do not improvise — wait for the answer.
 
 3. Visually confirm to the user the spec is ready and which branch is active:
 
-   ```
-   ✅ Ready to implement.
+    ```
+    ✅ Ready to implement.
 
-   Spec:   specs/NN-slug.md
-   Branch: spec-NN-slug  (active)   (← or the current branch, if no new branch was created)
-   State:  Approved   (← echo back the actual value found in the spec)
-   ```
+    Spec:   specs/NN-slug.md
+    Branch: spec-NN-slug  (active)   (← or the current branch, if no new branch was created)
+    State:  Approved   (← echo back the actual value found in the spec)
+    ```
 
 4. **Do not start implementing yet.** First show the spec summary to the user so they have it fresh. Extract and show:
-   - The **objective** (the line after `**Objective:**` / `**Objetivo:**` / equivalent label).
-   - The **scope** (the `## Scope` / `## Alcance` / equivalent section).
-   - The **implementation plan** (the section with the numbered steps — `## Implementation plan` / `## Plan de implementación` / equivalent).
-   - The **acceptance criteria** (the checklist — `## Acceptance criteria` / `## Criterios de aceptación` / equivalent).
+    - The **objective** (the line after `**Objective:**` / `**Objetivo:**` / equivalent label).
+    - The **scope** (the `## Scope` / `## Alcance` / equivalent section).
+    - The **implementation plan** (the section with the numbered steps — `## Implementation plan` / `## Plan de implementación` / equivalent).
+    - The **acceptance criteria** (the checklist — `## Acceptance criteria` / `## Criterios de aceptación` / equivalent).
 
 Match section headings by meaning, not by exact wording — the spec may be authored in any language.
 
@@ -193,8 +193,56 @@ Once confirmed, follow these rules during the entire implementation:
 ✅ All steps of the plan are implemented.
 
 Next step: verify the spec's acceptance criteria one by one.
-If they all pass, update the spec's state to "Implemented" (or the equivalent
-in your repo's language) and make the final commit before merging this branch.
+If they all pass, continue to Phase 5 (finalization and merge).
+```
+
+---
+
+### Phase 5 — Finalization, merge and release
+
+Once all acceptance criteria pass and the implementation is complete:
+
+1. **Update spec state to "Implemented":**
+    - Edit the spec file and change `Status: Approved` → `Status: Implemented`
+
+2. **Create final commit:**
+    - Stage all modified files: `git add <files>`
+    - Create commit with descriptive message following the format:
+        ```
+        feat: <brief description> (spec NN)
+
+        <detailed description of changes>
+
+        Changes:
+        - <file1>: <what changed>
+        - <file2>: <what changed>
+
+        <additional context if needed>
+
+        Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+        ```
+
+3. **Merge to master:**
+    - `git checkout master`
+    - `git merge spec-NN-slug --no-edit`
+
+4. **Create release tag:**
+    - Format: `1.0.XX` where XX is the spec number (e.g., spec 10 → tag `1.0.10`)
+    - `git tag -a 1.0.XX -m "Release 1.0.XX - Spec NN: <brief title>"`
+
+5. **Push everything:**
+    - `git push origin master spec-NN-slug --tags`
+    - This pushes the updated master branch, the spec implementation branch, and the new tag
+
+**Summary message after completion:**
+
+```
+✅ Spec NN completada e implementada exitosamente!
+
+Commit: <hash> - <message>
+Merge: spec-NN-slug → master
+Tag: 1.0.XX
+Push: ✅ master, rama spec, tag
 ```
 
 ---

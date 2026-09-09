@@ -86,7 +86,16 @@ El proyecto usa **Next.js 16.2.12** (`package.json`), una versión con cambios d
 Este repo sigue un flujo basado en specs (ver README.md, skills instaladas desde `Klerith/fernando-skills`). El trabajo de features no triviales pasa por dos comandos, no se escribe código directamente sin spec:
 
 1. **`/spec <descripción>`** — diseña la spec de forma guiada (aclara alcance, datos, plan de implementación, criterios de aceptación) y la guarda en `specs/NN-slug.md` con estado `Draft`. No escribe código.
+
 2. **`/spec-impl <NN-slug>`** — solo avanza si el estado de la spec es `Approved` (o equivalente). Crea/cambia a la rama `spec-NN-slug` (controlado por `AutoCreateBranch` en `specs/.spec-config.yml`, default `true`) e implementa el plan paso a paso, pausando para revisión de diff entre pasos.
+
+**Después de completar la implementación:**
+
+- Actualizar estado de la spec a `Implemented`
+- Crear commit final con formato: `feat: <descripción> (spec NN)` + atribución de Claude
+- Merge de `spec-NN-slug` a `master`
+- Crear tag de release con formato `1.0.XX` (donde XX = número de spec, ej: spec 10 → tag `1.0.10`)
+- Push de `master`, la rama spec, y el tag: `git push origin master spec-NN-slug --tags`
 
 `specs/` ya existe con 10 specs, todas `Implemented`:
 
