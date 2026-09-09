@@ -1,6 +1,6 @@
 # SPEC 10 — Middleware de protección de rutas autenticadas
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** 08-supabase-auth-email-password (Implemented), 09-security-hardening (Implemented)
 > **Date:** 2026-09-09
 > **Objective:** Implementar middleware de Next.js que proteja la ruta `/juegos/[id]/jugar` redirigiendo a `/auth?redirect=...` cuando no hay sesión autenticada, resolviendo la vulnerabilidad crítica S-01 detectada en la auditoría de seguridad.

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Estado del proyecto
 
-**Arcade Vault** ya no es un scaffold sin modificar: es una app Next.js (App Router, TypeScript, Tailwind v4) con 9 specs implementadas (`specs/01` a `specs/09`, ver abajo). Rutas reales existentes:
+**Arcade Vault** ya no es un scaffold sin modificar: es una app Next.js (App Router, TypeScript, Tailwind v4) con 10 specs implementadas (`specs/01` a `specs/10`, ver abajo). Rutas reales existentes:
 
 - `/` → Home (hero, features, preview de juegos, actividad/top jugadores, precios, CTA)
 - `/biblioteca` → catálogo de juegos (buscador, chips de categoría, grid) — leído de la tabla real `games` en Supabase (`lib/supabase/queries.ts#getGames`)
@@ -48,7 +48,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 El proyecto ya está conectado (MCP `supabase` en `.mcp.json`, project ref `kjpvjfhuqrclpblkthpd`). El cliente vive en `lib/supabase/` (`client.ts` para navegador, `server.ts` para Server Components/Actions vía `@supabase/ssr`, `queries.ts` con las lecturas del catálogo/leaderboards). Variables necesarias: `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (ver sección de entorno abajo).
 
-**Autenticación (spec 08):** usa Supabase Auth con método email/password. `components/session-provider.tsx` maneja la sesión real vía `supabase.auth.getSession()` y `onAuthStateChange()` (ya no usa `localStorage['av_user']` ni cookie mock). Registro requiere email, contraseña (mínimo 8 caracteres + mayúscula + número + símbolo, validado client-side y server-side), y nombre de jugador único. Verificación de email obligatoria antes de permitir login. Server Actions de auth en `lib/actions/auth.ts` (`signUpAction`, `signInAction`, `signOutAction`). `middleware.ts` protege `/juegos/[id]/jugar` para requerir sesión autenticada. Usuarios mock creados para testing/demos: `<nombre_lowercase>@mock.com` (ej. `neonfox@mock.com`) con contraseña `Test-001!`.
+**Autenticación (specs 08, 10):** usa Supabase Auth con método email/password. `components/session-provider.tsx` maneja la sesión real vía `supabase.auth.getSession()` y `onAuthStateChange()` (ya no usa `localStorage['av_user']` ni cookie mock). Registro requiere email, contraseña (mínimo 8 caracteres + mayúscula + número + símbolo, validado client-side y server-side), y nombre de jugador único. Verificación de email obligatoria antes de permitir login. Server Actions de auth en `lib/actions/auth.ts` (`signUpAction`, `signInAction`, `signOutAction`).
+
+**Protección de rutas (spec 10):** `proxy.ts` en la raíz del proyecto protege `/juegos/[id]/jugar` verificando sesión autenticada con `createServerClient` de `@supabase/ssr`. Si no hay sesión o `supabase.auth.getUser()` falla (fail-closed), redirige a `/auth?redirect=/juegos/[id]/jugar` para que el usuario vuelva a la partida después del login. Matcher configurado: `/juegos/:path*/jugar`. Nota: Next.js 16 con Turbopack requiere `proxy.ts` en lugar de `middleware.ts` — el archivo y la función se llaman `proxy()`, no `middleware()`.
+
+Usuarios mock creados para testing/demos: `<nombre_lowercase>@mock.com` (ej. `neonfox@mock.com`) con contraseña `Test-001!`.
 
 **Tablas reales en `public` (specs 06, 08):**
 
@@ -75,6 +79,8 @@ El proyecto ya está conectado (MCP `supabase` en `.mcp.json`, project ref `kjpv
 
 El proyecto usa **Next.js 16.2.12** (`package.json`), una versión con cambios de ruptura respecto a lo que conoces por entrenamiento. **Antes de escribir código que use una API de Next.js, consulta la doc empaquetada en `node_modules/next/dist/docs/`** (organizada en `01-app/`, `02-pages/`, `03-architecture/`, `04-community/`) en vez de asumir el comportamiento de versiones anteriores. Presta atención a los avisos de deprecación.
 
+**Cambio crítico en middleware (Next.js 16 + Turbopack):** Este proyecto usa **`proxy.ts`** en lugar de `middleware.ts` para interceptar requests. El archivo debe llamarse `proxy.ts` y exportar una función `proxy()`, no `middleware()`. Turbopack rechaza tener ambos archivos presentes ("Both middleware file and proxy file detected. Please use proxy.ts only"). La configuración del matcher y el uso de `createServerClient` son idénticos a middleware tradicional, solo cambia el nombre del archivo y la función.
+
 ## Flujo de trabajo: Spec Driven Design
 
 Este repo sigue un flujo basado en specs (ver README.md, skills instaladas desde `Klerith/fernando-skills`). El trabajo de features no triviales pasa por dos comandos, no se escribe código directamente sin spec:
@@ -82,7 +88,7 @@ Este repo sigue un flujo basado en specs (ver README.md, skills instaladas desde
 1. **`/spec <descripción>`** — diseña la spec de forma guiada (aclara alcance, datos, plan de implementación, criterios de aceptación) y la guarda en `specs/NN-slug.md` con estado `Draft`. No escribe código.
 2. **`/spec-impl <NN-slug>`** — solo avanza si el estado de la spec es `Approved` (o equivalente). Crea/cambia a la rama `spec-NN-slug` (controlado por `AutoCreateBranch` en `specs/.spec-config.yml`, default `true`) e implementa el plan paso a paso, pausando para revisión de diff entre pasos.
 
-`specs/` ya existe con 9 specs, todas `Implemented`:
+`specs/` ya existe con 10 specs, todas `Implemented`:
 
 - `01-mvp-visual-arcade-vault.md` — MVP visual (Biblioteca, Detalle, Reproductor, Auth mock, Salón de la Fama).
 - `02-new-home-page.md` — Home en `/` y reubicación de Biblioteca a `/biblioteca`.
@@ -91,8 +97,9 @@ Este repo sigue un flujo basado en specs (ver README.md, skills instaladas desde
 - `05-asteroids-motor-real.md` — motor real de Asteroids (`lib/games/asteroids/engine.ts`) enchufado al reproductor vía el contrato de `lib/games/types.ts`.
 - `06-leaderboards-supabase.md` — migra catálogo (`games`) y leaderboards (`players`/`scores`) de mock a tablas reales de Supabase; agrega `saveScoreAction`.
 - `07-tetris-motor-real.md` — motor real de Tetris (`lib/games/tetris/engine.ts`), segundo motor registrado en `lib/games/registry.ts`.
-- `08-supabase-auth-email-password.md` — autenticación real con Supabase Auth (email/password con verificación obligatoria), reemplaza el mock de sesión por `supabase.auth`, agrega columna `user_id` a `players`, protege `/juegos/[id]/jugar` con middleware, guardado automático de puntajes bajo el jugador autenticado, políticas RLS verificadas para `insert` en `players`/`scores`.
+- `08-supabase-auth-email-password.md` — autenticación real con Supabase Auth (email/password con verificación obligatoria), reemplaza el mock de sesión por `supabase.auth`, agrega columna `user_id` a `players`, guardado automático de puntajes bajo el jugador autenticado, políticas RLS verificadas para `insert` en `players`/`scores`.
 - `09-security-hardening.md` — hardening de seguridad: eleva mínimo de contraseña de 6 a 8 caracteres (validación client-side y server-side), agrega headers HTTP de seguridad (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Content-Security-Policy`) en `next.config.ts`, resuelve warning de `rls_auto_enable()` en Supabase.
+- `10-middleware-auth-protection.md` — implementa `proxy.ts` (Next.js 16 Turbopack) para proteger `/juegos/[id]/jugar` verificando sesión autenticada con `createServerClient` de `@supabase/ssr`. Fail-closed: si no hay sesión o `getUser()` falla, redirige a `/auth?redirect=...`. Resuelve hallazgo crítico S-01 del reporte de auditoría de seguridad.
 
 ## Variables de entorno
 
