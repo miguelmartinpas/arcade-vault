@@ -105,7 +105,7 @@ Cada archivo `rollback-<fecha>-<version>.md` contiene:
 
 ```bash
 # 1. Leer el archivo de rollback de la versión que querés revertir
-cat resources/rollback/rollback-2026-09-09-1.0.10.md
+cat references/rollback/rollback-2026-09-09-1.0.10.md
 
 # 2. Copiar y ejecutar el comando de revert que aparece ahí
 git revert -m 1 230ae36
@@ -140,7 +140,7 @@ git diff 1.0.09 1.0.10
 2. **Localizar el archivo de rollback**:
 
     ```bash
-    ls -la resources/rollback/
+    ls -la references/rollback/
     ```
 
 3. **Leer el archivo de la versión problemática**:

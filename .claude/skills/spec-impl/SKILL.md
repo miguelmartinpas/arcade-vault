@@ -232,7 +232,7 @@ Once all acceptance criteria pass and the implementation is complete:
 
 5. **Create rollback file:**
     - Get the merge commit hash: `git log -1 --format=%H`
-    - Create file: `resources/rollback/rollback-YYYY-MM-DD-1.0.XX.md`
+    - Create file: `references/rollback/rollback-YYYY-MM-DD-1.0.XX.md`
     - Include in the file:
         - Merge commit hash
         - Tag reference (1.0.XX)
@@ -254,7 +254,7 @@ Once all acceptance criteria pass and the implementation is complete:
 Commit: <hash> - <message>
 Merge: spec-NN-slug → master
 Tag: 1.0.XX
-Rollback: resources/rollback/rollback-YYYY-MM-DD-1.0.XX.md
+Rollback: references/rollback/rollback-YYYY-MM-DD-1.0.XX.md
 Push: ✅ master, rama spec, tag
 ```
 
