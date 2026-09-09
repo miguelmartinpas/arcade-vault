@@ -48,5 +48,6 @@ next-env.d.ts
 .playwright-mcp/.gitkeep
 
 references/*
+!references/security
 !references/security/*
 !references/game-suggestion-todo.md

@@ -64,6 +64,8 @@ El proyecto ya está conectado (MCP `supabase` en `.mcp.json`, project ref `kjpv
 
 - `game-jam` (`.claude/agents/game-jam.md`) — generador de specs en batch para múltiples juegos. A partir de un criterio de selección (prioridad, categoría, lista específica) desde `references/game-suggestion-todo.md`, genera 2-6 specs por juego en `specs/game-jam/[game-id]/` (01-mvp + 02+ features), todas en estado `Draft`. No escribe código ni toca Supabase — solo genera archivos `.md` de specs basándose en el formato de las specs 05 y 07. Invocación manual (ej: "game-jam alta prioridad", "game-jam VERSUS", "game-jam bloque-buster + serpentina"). Optimizado para preparar specs de varios juegos a la vez; `/port-game` sigue siendo la opción para un solo juego con flujo interactivo.
 
+- `security-audit` (`.claude/agents/security-audit.md`) — auditor de seguridad que examina la base de datos Supabase y la aplicación Next.js. Ejecuta auditorías en 5 fases: (0) contexto, (1) Supabase (get_advisors, RLS, políticas, funciones), (2) aplicación (headers HTTP, validaciones, middleware, Server Actions, secrets), (3) análisis y clasificación, (4) generación de reporte, (5) resumen ejecutivo. Genera reportes estructurados en `references/security/security-audit-YYYY-MM-DD.md` con hallazgos clasificados por severidad (CRÍTICO/ALTO/MEDIO/BAJO), evidencia concreta (queries SQL, extractos de código) y recomendaciones accionables priorizadas. Solo lectura — nunca modifica código ni ejecuta queries de escritura. Invocación manual (ej: "audita seguridad", "revisa vulnerabilidades", "security check"). Basado en specs 08 (auth) y 09 (hardening).
+
 ## Skills
 
 - Usa siempre `/frontend-design` para diseñar el interfaz de usuario.
