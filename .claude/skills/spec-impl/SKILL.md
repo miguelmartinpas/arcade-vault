@@ -230,7 +230,19 @@ Once all acceptance criteria pass and the implementation is complete:
     - Format: `1.0.XX` where XX is the spec number (e.g., spec 10 → tag `1.0.10`)
     - `git tag -a 1.0.XX -m "Release 1.0.XX - Spec NN: <brief title>"`
 
-5. **Push everything:**
+5. **Create rollback file:**
+    - Get the merge commit hash: `git log -1 --format=%H`
+    - Create file: `resources/rollback/rollback-YYYY-MM-DD-1.0.XX.md`
+    - Include in the file:
+        - Merge commit hash
+        - Tag reference (1.0.XX)
+        - Exact `git revert -m 1 <hash>` command
+        - Alternative `git reset --hard` command (with warnings)
+        - Brief description of what was merged
+        - Reference to previous stable tag
+    - **This file is the safety net** - contains the exact command to rollback this merge
+
+6. **Push everything:**
     - `git push origin master spec-NN-slug --tags`
     - This pushes the updated master branch, the spec implementation branch, and the new tag
 
@@ -242,6 +254,7 @@ Once all acceptance criteria pass and the implementation is complete:
 Commit: <hash> - <message>
 Merge: spec-NN-slug → master
 Tag: 1.0.XX
+Rollback: resources/rollback/rollback-YYYY-MM-DD-1.0.XX.md
 Push: ✅ master, rama spec, tag
 ```
 
